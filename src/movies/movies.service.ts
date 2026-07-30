@@ -531,21 +531,21 @@ export class MoviesService implements OnModuleInit {
   }
 
   private populateFallbackCatalog(platform: 'nflix' | 'nprime' | 'hotstar') {
-    const mockMovies: Movie[] = [
-      { id: 'm-157336', tmdbId: '157336', title: 'Interstellar', description: 'A team of explorers travel through a wormhole in space in an attempt to ensure humanity survival.', posterUrl: 'https://image.tmdb.org/t/p/w780/gEU2QniE6E77NI6lCU6MxlNBvIx.jpg', backdropUrl: 'https://image.tmdb.org/t/p/w1280/xJHokMbljvjADYdit5fK5VQsY2v.jpg', releaseYear: 2014, matchScore: 98, maturityRating: 'PG-13', duration: '2h 49m', genres: ['Sci-Fi', 'Adventure', 'Drama'], videoUrl: this.encodeUrl('https://www.2embed.cc/embed/157336'), isSeries: false },
-      { id: 'm-27205', tmdbId: '27205', title: 'Inception', description: 'A thief who steals corporate secrets through the use of dream-sharing technology.', posterUrl: 'https://image.tmdb.org/t/p/w780/oYuLE1h2CVCdIF9i2V47h7918x8.jpg', backdropUrl: 'https://image.tmdb.org/t/p/w1280/8ZTVqvTZ25nDzzvFiJ19bWb2vT5.jpg', releaseYear: 2010, matchScore: 97, maturityRating: 'PG-13', duration: '2h 28m', genres: ['Action', 'Sci-Fi', 'Thriller'], videoUrl: this.encodeUrl('https://www.2embed.cc/embed/27205'), isSeries: false },
-      { id: 'm-1399', tmdbId: '1399', title: 'Game of Thrones', description: 'Nine noble families fight for control over the lands of Westeros.', posterUrl: 'https://image.tmdb.org/t/p/w780/1XS1oqL89vEDVXtMK9Z08as1Coc.jpg', backdropUrl: 'https://image.tmdb.org/t/p/w1280/2OMG0YKMh28TIG92Lh2168926.jpg', releaseYear: 2011, matchScore: 99, maturityRating: 'TV-MA', duration: '8 Seasons', genres: ['Drama', 'Action', 'Sci-Fi'], videoUrl: this.encodeUrl('https://www.2embed.cc/embed/1399/1/1'), isSeries: true },
-      { id: 'm-66732', tmdbId: '66732', title: 'Stranger Things', description: 'When a young boy vanishes, a small town uncovers a mystery involving secret experiments.', posterUrl: 'https://image.tmdb.org/t/p/w780/49WJfeN0moxb9IPfGn88qMG4d2.jpg', backdropUrl: 'https://image.tmdb.org/t/p/w1280/56v2KjBlU4XaOv9rvyEQypROD7P.jpg', releaseYear: 2016, matchScore: 96, maturityRating: 'TV-14', duration: '4 Seasons', genres: ['Sci-Fi', 'Horror', 'Drama'], videoUrl: this.encodeUrl('https://www.2embed.cc/embed/66732/1/1'), isSeries: true }
+    const mockMovies: any[] = [
+      { id: 'm-157336', tmdbId: '157336', title: 'Interstellar', description: 'A team of explorers travel through a wormhole in space in an attempt to ensure humanity survival.', posterUrl: 'https://image.tmdb.org/t/p/w780/gEU2QniE6E77NI6lCU6MxlNBvIx.jpg', backdropUrl: 'https://image.tmdb.org/t/p/w1280/xJHokMbljvjADYdit5fK5VQsY2v.jpg', releaseYear: 2014, matchScore: 98, maturityRating: 'PG-13', duration: '2h 49m', genres: ['Sci-Fi', 'Adventure', 'Drama'], videoUrl: this.encodeUrl('https://www.2embed.cc/embed/157336'), trailerUrl: '', cast: ['Matthew McConaughey', 'Anne Hathaway'], director: 'Christopher Nolan', tags: ['Sci-Fi', 'Space'], audioLanguages: ['English'], subtitleLanguages: ['English'], isSeries: false },
+      { id: 'm-27205', tmdbId: '27205', title: 'Inception', description: 'A thief who steals corporate secrets through the use of dream-sharing technology.', posterUrl: 'https://image.tmdb.org/t/p/w780/oYuLE1h2CVCdIF9i2V47h7918x8.jpg', backdropUrl: 'https://image.tmdb.org/t/p/w1280/8ZTVqvTZ25nDzzvFiJ19bWb2vT5.jpg', releaseYear: 2010, matchScore: 97, maturityRating: 'PG-13', duration: '2h 28m', genres: ['Action', 'Sci-Fi', 'Thriller'], videoUrl: this.encodeUrl('https://www.2embed.cc/embed/27205'), trailerUrl: '', cast: ['Leonardo DiCaprio', 'Joseph Gordon-Levitt'], director: 'Christopher Nolan', tags: ['Sci-Fi', 'Dreams'], audioLanguages: ['English'], subtitleLanguages: ['English'], isSeries: false },
+      { id: 'm-1399', tmdbId: '1399', title: 'Game of Thrones', description: 'Nine noble families fight for control over the lands of Westeros.', posterUrl: 'https://image.tmdb.org/t/p/w780/1XS1oqL89vEDVXtMK9Z08as1Coc.jpg', backdropUrl: 'https://image.tmdb.org/t/p/w1280/2OMG0YKMh28TIG92Lh2168926.jpg', releaseYear: 2011, matchScore: 99, maturityRating: 'TV-MA', duration: '8 Seasons', genres: ['Drama', 'Action', 'Sci-Fi'], videoUrl: this.encodeUrl('https://www.2embed.cc/embed/1399/1/1'), trailerUrl: '', cast: ['Emilia Clarke', 'Kit Harington'], director: 'David Benioff', tags: ['Fantasy', 'Dragons'], audioLanguages: ['English'], subtitleLanguages: ['English'], isSeries: true },
+      { id: 'm-66732', tmdbId: '66732', title: 'Stranger Things', description: 'When a young boy vanishes, a small town uncovers a mystery involving secret experiments.', posterUrl: 'https://image.tmdb.org/t/p/w780/49WJfeN0moxb9IPfGn88qMG4d2.jpg', backdropUrl: 'https://image.tmdb.org/t/p/w1280/56v2KjBlU4XaOv9rvyEQypROD7P.jpg', releaseYear: 2016, matchScore: 96, maturityRating: 'TV-14', duration: '4 Seasons', genres: ['Sci-Fi', 'Horror', 'Drama'], videoUrl: this.encodeUrl('https://www.2embed.cc/embed/66732/1/1'), trailerUrl: '', cast: ['Millie Bobby Brown', 'Finn Wolfhard'], director: 'The Duffer Brothers', tags: ['Sci-Fi', '80s'], audioLanguages: ['English'], subtitleLanguages: ['English'], isSeries: true }
     ];
 
     mockMovies.forEach(m => {
       this.state[platform].movies.set(m.id, m);
-      this.state[platform].tmdbIdIndex.set(m.tmdbId, m.id);
+      this.state[platform].tmdbIdIndex.set(m.tmdbId!, m.id);
     });
 
     this.state[platform].categories = [
-      { id: 'trending', name: 'Trending Now', movies: mockMovies },
-      { id: 'popular', name: 'Popular on Streamly', movies: [...mockMovies].reverse() }
+      { id: 'trending', name: 'Trending Now', slug: 'trending', movies: mockMovies },
+      { id: 'popular', name: 'Popular on Streamly', slug: 'popular', movies: [...mockMovies].reverse() }
     ];
   }
 
