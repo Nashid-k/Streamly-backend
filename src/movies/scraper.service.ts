@@ -43,17 +43,23 @@ export class ScraperService implements OnModuleInit, OnModuleDestroy {
 
   async onModuleInit() {
     this.logger.log('Initializing Puppeteer browser instance...');
-    this.browser = await puppeteer.launch({
-      headless: 'new' as any,
-      args: [
-        '--no-sandbox',
-        '--disable-setuid-sandbox',
-        '--disable-features=IsolateOrigins,site-per-process',
-        '--disable-site-isolation-trials',
-        '--allow-running-insecure-content',
-        '--disable-popup-blocking',
-      ],
-    });
+    try {
+      this.browser = await puppeteer.launch({
+        headless: 'new' as any,
+        args: [
+          '--no-sandbox',
+          '--disable-setuid-sandbox',
+          '--disable-features=IsolateOrigins,site-per-process',
+          '--disable-site-isolation-trials',
+          '--allow-running-insecure-content',
+          '--disable-popup-blocking',
+        ],
+      });
+      this.logger.log('Puppeteer browser launched successfully.');
+    } catch (e) {
+      this.logger.warn(`Puppeteer browser failed to launch (falling back to direct stream players): ${e.message || e}`);
+      this.browser = null;
+    }
   }
 
   async onModuleDestroy() {
