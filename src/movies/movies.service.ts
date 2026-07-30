@@ -92,14 +92,15 @@ export class MoviesService implements OnModuleInit {
     
     this.logger.log(`Using Watch Providers for Region ${this.region}: Netflix=${this.providerMap['nflix']}, Prime=${this.providerMap['nprime']}, Hotstar=${this.providerMap['hotstar']}`);
 
-    // Load catalog in background asynchronously so HTTP server binds port instantly (0s startup)
+    // Load all 3 platform catalogs concurrently in the background for zero-wait platform switching
     (async () => {
       try {
-        await this.refreshCatalog("nflix");
-        await new Promise(r => setTimeout(r, 2000));
-        if (this.state.nprime.movies.size === 0) await this.refreshCatalog("nprime");
-        await new Promise(r => setTimeout(r, 2000));
-        if (this.state.hotstar.movies.size === 0) await this.refreshCatalog("hotstar");
+        await Promise.allSettled([
+          this.refreshCatalog("nflix"),
+          this.refreshCatalog("nprime"),
+          this.refreshCatalog("hotstar"),
+        ]);
+        this.logger.log('All platform catalogs (Netflix, Prime Video, Hotstar) loaded into memory.');
       } catch (e) {
         this.logger.warn('Catalog background load failed: ' + String(e));
       }
