@@ -92,18 +92,16 @@ export class MoviesService implements OnModuleInit {
     
     this.logger.log(`Using Watch Providers for Region ${this.region}: Netflix=${this.providerMap['nflix']}, Prime=${this.providerMap['nprime']}, Hotstar=${this.providerMap['hotstar']}`);
 
-    // Load Netflix immediately so the app is ready
-    await this.refreshCatalog("nflix");
-
-    // Preload Prime and Hotstar in the background, staggered to avoid TMDB rate limits
+    // Load catalog in background asynchronously so HTTP server binds port instantly (0s startup)
     (async () => {
       try {
+        await this.refreshCatalog("nflix");
         await new Promise(r => setTimeout(r, 2000));
         if (this.state.nprime.movies.size === 0) await this.refreshCatalog("nprime");
         await new Promise(r => setTimeout(r, 2000));
         if (this.state.hotstar.movies.size === 0) await this.refreshCatalog("hotstar");
       } catch (e) {
-        this.logger.warn('Background preload failed: ' + String(e));
+        this.logger.warn('Catalog background load failed: ' + String(e));
       }
     })();
   }
