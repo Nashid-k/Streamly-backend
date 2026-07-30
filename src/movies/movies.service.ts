@@ -362,16 +362,9 @@ export class MoviesService implements OnModuleInit {
     const monetization = 'flatrate';
     const region = this.region;
     
-    const networkMap = {
-      'nflix': '213',
-      'nprime': '1024',
-      'hotstar': '2739|3919|453' // Disney+, Hotstar, Hulu
-    };
-    const networkId = networkMap[platform];
-    
-    // Movies use watch_providers, TV uses networks for strict isolation
+    // Enforce strict platform isolation for both Movies and TV series using with_watch_providers
     const baseDiscoverMovie = `with_watch_providers=${providerId}&watch_region=${region}&with_watch_monetization_types=${monetization}`;
-    const baseDiscoverTv = `with_networks=${networkId}`;
+    const baseDiscoverTv = `with_watch_providers=${providerId}&watch_region=${region}&with_watch_monetization_types=${monetization}`;
     
     // Date ranges for "Recently Added" and "Upcoming"
     const today = new Date().toISOString().split('T')[0];
