@@ -224,7 +224,8 @@ export class MoviesService implements OnModuleInit {
     }
 
     const tmdbIdStr = String(item.id);
-    const rawEmbedUrl = mediaType === 'tv'
+    const isTV = mediaType === 'tv' || Boolean(item.first_air_date || item.number_of_seasons || item.number_of_episodes);
+    const rawEmbedUrl = isTV
       ? `https://www.2embed.cc/embed/${tmdbIdStr}/1/1`
       : `https://www.2embed.cc/embed/${tmdbIdStr}`;
     const embedUrl = this.encodeUrl(rawEmbedUrl);
@@ -234,7 +235,7 @@ export class MoviesService implements OnModuleInit {
     // VidLink params: brand it red like Netflix, show next-episode button, show title
     const vl = 'primaryColor=E50914&secondaryColor=141414&iconColor=FFFFFF&nextButton=true&title=false&poster=false&autoplay=true';
 
-    const rawSources = mediaType === 'tv' ? [
+    const rawSources = isTV ? [
       // ══ PRIMARY — single consistent Netflix-style player with built-in audio/subtitle/quality switching ══
       { name: '2Embed (Cineby)', url: `https://www.2embed.cc/embed/${tmdbIdStr}/1/1`,                                       type: 'stream' as const },
       { name: 'VidLink',     url: `https://vidlink.pro/tv/${tmdbIdStr}/1/1?${vl}`,                                           type: 'stream' as const },
@@ -331,7 +332,7 @@ export class MoviesService implements OnModuleInit {
       isUpcoming: isUpcoming,
       maturityRating: rating,
       duration: duration,
-      isSeries: mediaType === 'tv',
+      isSeries: isTV,
       isAnime: isAnime,
       genres: (item.genre_ids || []).map((id: number) => this.genres.get(id)).filter((name: string | undefined): name is string => Boolean(name)),
       cast: [],
@@ -650,14 +651,21 @@ export class MoviesService implements OnModuleInit {
     if (!movie) throw new NotFoundException(`Title "${id}" was not found.`);
 
     // Dynamically enrich movie details (credits, images & YouTube trailer video) from TMDB on demand
-    if (!movie.cast?.length || !movie.videoUrl || !movie.logoUrl || !movie.trailerUrl) {
+    if (!movie.cast?.length || !movie.videoUrl || !movie.logoUrl || !movie.trailerUrl || movie.seasonsCount === undefined) {
       try {
-        const mediaType = movie.isSeries ? 'tv' : 'movie';
+        const isTvType = movie.isSeries || movie.id.startsWith('tmdb-tv-') || movie.seasonsCount !== undefined;
+        const mediaType = isTvType ? 'tv' : 'movie';
         const details = await this.tmdb(`${mediaType}/${movie.tmdbId}`, { 
           append_to_response: 'credits,videos,images,translations,keywords',
           include_image_language: 'en,null,ja,ko,zh,hi,ta,te,ml,kn,fr,es,de,it,pt,ru,ar,tr,th',
           include_video_language: 'en,null,ja,ko,zh,hi,ta,te,ml,kn,fr,es,de,it,pt,ru,ar,tr,th'
         });
+
+        // Ensure isSeries flag is updated if TMDB details confirm TV show
+        if (details.number_of_seasons !== undefined || details.first_air_date) {
+          movie.isSeries = true;
+          movie.seasonsCount = details.number_of_seasons || 1;
+        }
         
         const logoObj = details.images?.logos?.find((l: any) => l.iso_639_1 === 'en') || details.images?.logos?.[0];
         if (logoObj?.file_path) {
@@ -769,7 +777,15 @@ export class MoviesService implements OnModuleInit {
       const internalId = this.state[platform].tmdbIdIndex.get(id);
       if (internalId) movie = this.state[platform].movies.get(internalId);
     }
-    if (!movie || !movie.isSeries) return [];
+    if (!movie) return [];
+
+    // Ensure TV metadata is loaded
+    if (movie.isSeries === undefined || movie.seasonsCount === undefined) {
+      try {
+        await this.getMovieById(id, platform);
+        movie = this.state[platform].movies.get(id) || movie;
+      } catch (e) {}
+    }
 
     try {
       const seasonData = await this.tmdb(`tv/${movie.tmdbId}/season/${seasonNumber}`);
