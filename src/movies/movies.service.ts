@@ -165,33 +165,31 @@ export class MoviesService implements OnModuleInit {
     const state = this.state[platform];
     const rapidApiKey = process.env.RAPIDAPI_KEY;
     if (!rapidApiKey) {
-      this.logger.warn('RAPIDAPI_KEY not found. Using TMDB release dates for Recently Added / Leaving Soon.');
+      this.logger.log('RAPIDAPI_KEY not set. Using TMDB release dates for Recently Added / Leaving Soon badges.');
       return;
     }
     const serviceName = platform === 'hotstar' ? 'hotstar' : (platform === 'nprime' ? 'prime' : 'netflix');
     try {
-      this.logger.log(`Fetching exact ${serviceName} catalog status from Streaming Availability API...`);
       const headers = {
         'X-RapidAPI-Key': rapidApiKey,
         'X-RapidAPI-Host': 'streaming-availability.p.rapidapi.com',
       };
 
-      // 1. Fetch recently added (newly added to service US)
-      const newRes = await fetch(`https://streaming-availability.p.rapidapi.com/changes?country=us&services=${serviceName}&change_type=new&item_type=show`, { headers });
-      if (newRes.ok) {
+      const [newRes, expRes] = await Promise.all([
+        fetch(`https://streaming-availability.p.rapidapi.com/changes?country=us&services=${serviceName}&change_type=new&item_type=show`, { headers }).catch(() => null),
+        fetch(`https://streaming-availability.p.rapidapi.com/changes?country=us&services=${serviceName}&change_type=expiring&item_type=show`, { headers }).catch(() => null),
+      ]);
+
+      if (newRes && newRes.ok) {
         const newData = await newRes.json();
         const newIds = Object.values(newData.shows || {})
           .map((item: any) => item.tmdbId)
           .filter(Boolean)
           .map((id: string) => id.includes('/') ? id.split('/')[1] : id);
         state.realRecentlyAddedTmdbIds = new Set(newIds.map(String));
-      } else {
-        this.logger.warn(`Failed to fetch recently added: ${newRes.status}`);
       }
 
-      // 2. Fetch leaving soon (expiring)
-      const expRes = await fetch(`https://streaming-availability.p.rapidapi.com/changes?country=us&services=${serviceName}&change_type=expiring&item_type=show`, { headers });
-      if (expRes.ok) {
+      if (expRes && expRes.ok) {
         const expData = await expRes.json();
         const expIds = Object.values(expData.shows || {})
           .map((item: any) => item.tmdbId)
@@ -199,9 +197,9 @@ export class MoviesService implements OnModuleInit {
           .map((id: string) => id.includes('/') ? id.split('/')[1] : id);
         state.realLeavingSoonTmdbIds = new Set(expIds.map(String));
       }
-      this.logger.log(`Real Netflix Status loaded: ${state.realRecentlyAddedTmdbIds.size} recently added, ${state.realLeavingSoonTmdbIds.size} leaving soon.`);
+      this.logger.log(`Status badges loaded for ${serviceName}: ${state.realRecentlyAddedTmdbIds.size} recently added, ${state.realLeavingSoonTmdbIds.size} leaving soon.`);
     } catch (e) {
-      this.logger.warn('Failed to fetch real Netflix status from Streaming Availability:', e);
+      this.logger.log('RapidAPI status badge fetch skipped, using TMDB release dates fallback.');
     }
   }
 
