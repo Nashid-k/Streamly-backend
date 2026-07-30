@@ -515,7 +515,7 @@ export class MoviesService implements OnModuleInit {
           state.movies.set(id, movie);
           if (movie.tmdbId) state.tmdbIdIndex.set(movie.tmdbId.toString(), id);
         }
-        this.state[platform].categories = categories.filter((c) => c.movies.length >= 12);
+        this.state[platform].categories = categories.filter((c) => c.movies.length >= 1);
         this.lastCatalogError = undefined;
         this.logger.log(`Loaded ${this.state[platform].movies.size} unique titles across ${this.state[platform].categories.length} TMDB dynamic rails.`);
       } else {
