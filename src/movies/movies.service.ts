@@ -23,7 +23,7 @@ export class MoviesService implements OnModuleInit {
   private readonly language = process.env.TMDB_LANGUAGE || 'en-US';
   private region = process.env.TMDB_REGION || 'US';
   private readonly readToken = process.env.TMDB_READ_TOKEN;
-  private readonly apiKey = process.env.TMDB_API_KEY;
+  private readonly apiKey = process.env.TMDB_API_KEY || '522f1f08eda5e03bf93100ba29471d5d';
   private readonly pagesPerRail = this.parsePositiveInt(process.env.TMDB_CATALOG_PAGES, 3, 1, 20);
   private readonly itemsPerRail = this.parsePositiveInt(process.env.TMDB_ITEMS_PER_RAIL, 40, 1, 400);
   private readonly requestTimeoutMs = this.parsePositiveInt(process.env.TMDB_REQUEST_TIMEOUT_MS, 15_000, 1_000, 60_000);
