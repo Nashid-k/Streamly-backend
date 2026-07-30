@@ -467,7 +467,8 @@ export class MoviesService implements OnModuleInit {
         const uniqueTitles = new Map<string, Movie>();
         allItems.forEach((item: any) => {
           const movie = this.toMovie(item, rail.mediaType);
-          if (!uniqueTitles.has(movie.id)) {
+          // Strictly require at least one valid poster or backdrop image
+          if ((movie.posterUrl || movie.backdropUrl) && !uniqueTitles.has(movie.id)) {
             if (state.realRecentlyAddedTmdbIds.size > 0 || state.realLeavingSoonTmdbIds.size > 0) {
               movie.isRecentlyAdded = state.realRecentlyAddedTmdbIds.has(String(movie.tmdbId));
               movie.isLeavingSoon = state.realLeavingSoonTmdbIds.has(String(movie.tmdbId));
