@@ -4,6 +4,7 @@ import { Cache } from 'cache-manager';
 import puppeteer from 'puppeteer-extra';
 import StealthPlugin from 'puppeteer-extra-plugin-stealth';
 import AdblockerPlugin from 'puppeteer-extra-plugin-adblocker';
+import { MOVIES, META } from '@consumet/extensions';
 
 puppeteer.use(StealthPlugin());
 // Block all ads & trackers — interceptResolutionPriority ensures our handler
@@ -90,6 +91,63 @@ export class ScraperService implements OnModuleInit, OnModuleDestroy {
     }
 
     this.logger.log(`Scraping: ${targetUrl}`);
+
+    // ── FAST-PATH: @consumet/extensions NATIVE SCRAPING ───────────────────
+    // This dramatically speeds up extraction and completely bypasses headless 
+    // browsers for supported titles, giving us the raw Ad-Free HLS stream.
+    try {
+      const tmdb = new META.TMDB();
+      const flixhq = new MOVIES.FlixHQ();
+      
+      // We do a quick search using TMDB info
+      const type = isTv ? 'tv' : 'movie';
+      const info = await tmdb.fetchMediaInfo(tmdbId, type as any);
+      
+      if (info && info.title) {
+        const titleStr = typeof info.title === 'string' 
+          ? info.title 
+          : (info.title as any).english || (info.title as any).romaji || (info.title as any).native;
+        this.logger.log(`Consumet fast-path: Found TMDB title "${titleStr}"`);
+        const searchRes = await flixhq.search(titleStr as string);
+        
+        if (searchRes.results && searchRes.results.length > 0) {
+          const firstResult = searchRes.results[0];
+          const mediaInfo = await flixhq.fetchMediaInfo(firstResult.id);
+          
+          let episodeId = mediaInfo.episodes?.[0]?.id;
+          if (isTv && mediaInfo.episodes) {
+             const matched = mediaInfo.episodes.find((e: any) => e.season === season && e.number === episode);
+             if (matched) episodeId = matched.id;
+          }
+
+          if (episodeId) {
+            const sources = await flixhq.fetchEpisodeSources(episodeId, mediaInfo.id);
+            const bestSource = sources.sources?.find((s: any) => s.quality === 'auto') || sources.sources?.[0];
+            
+            if (bestSource && bestSource.url) {
+              const rawStreamUrl = bestSource.url;
+              let proxiedUrl = `${PROXY_BASE}/api/movies/proxy/manifest?url=${encodeURIComponent(rawStreamUrl)}`;
+              if (sources.headers?.Referer) proxiedUrl += `&ref=${encodeURIComponent(sources.headers.Referer)}`;
+              
+              const result: ScrapeResult = {
+                streamUrl: proxiedUrl,
+                rawStreamUrl,
+                referer: sources.headers?.Referer || '',
+                origin: sources.headers?.Origin || '',
+                subtitles: (sources.subtitles || []).map((s: any) => ({ lang: s.lang || 'Unknown', url: s.url })),
+              };
+              
+              await this.cacheManager.set(cacheKey, result);
+              this.logger.log(`Consumet SUCCESS: ${rawStreamUrl}`);
+              return result;
+            }
+          }
+        }
+      }
+    } catch (e: any) {
+      this.logger.warn(`Consumet fast-path failed (${e.message}), falling back to Puppeteer Universal Bootstrapper...`);
+    }
+    // ──────────────────────────────────────────────────────────────────────
 
     let page: any;
     try {
