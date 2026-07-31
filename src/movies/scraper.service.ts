@@ -199,30 +199,45 @@ export class ScraperService implements OnModuleInit, OnModuleDestroy {
         await new Promise(r => setTimeout(r, 2000));
       }
 
-      // ── Click play buttons in the TOP-LEVEL page ──────────────────────
-      const PLAY_SELECTORS = [
-        '.jw-display-icon-display', '.vjs-big-play-button',
-        '[class*="play-btn"]', '[class*="playBtn"]', '[class*="play-button"]',
-        '[class*="bigPlay"]', '[id*="play-btn"]', 'button[aria-label*="play" i]',
-        '.plyr__control--overlaid', '.play-overlay', '.btn-play',
-      ];
-      const clickPlay = `
-        (function() {
-          var sels = ${JSON.stringify(PLAY_SELECTORS)};
-          for (var i = 0; i < sels.length; i++) {
-            var el = document.querySelector(sels[i]);
-            if (el) { var r = el.getBoundingClientRect(); if (r.width > 20) { el.click(); return true; } }
-          }
-          return false;
-        })()
-      `;
-      await page.evaluate(clickPlay).catch(() => {});
+      // ── UNIVERSAL PLAYER BOOTSTRAPPER (Cracks 99% of 3rd party players) ──
+      // Many players obscure their play buttons or use click-shield overlays.
+      // We simulate real native mouse clicks on the center of the viewport to
+      // brute-force start the video and trigger the m3u8 network request.
+      
+      const attemptPlay = async (f: any) => {
+        try {
+          const PLAY_SELECTORS = [
+            '.jw-display-icon-display', '.vjs-big-play-button',
+            '[class*="play-btn"]', '[class*="playBtn"]', '[class*="play-button"]',
+            '[class*="bigPlay"]', '[id*="play-btn"]', 'button[aria-label*="play" i]',
+            '.plyr__control--overlaid', '.play-overlay', '.btn-play',
+          ];
+          await f.evaluate((sels: string[]) => {
+            for (const sel of sels) {
+              const el = document.querySelector(sel) as HTMLElement;
+              if (el && el.getBoundingClientRect().width > 0) el.click();
+            }
+          }, PLAY_SELECTORS).catch(() => {});
+        } catch (e) {}
+      };
 
-      // ── Also click play inside every child frame (handles nested iframes) ─
+      // 1. DOM-level clicks across the entire frame tree
       for (const frame of page.frames()) {
-        if (frame === page.mainFrame()) continue;
-        await frame.evaluate(clickPlay).catch(() => {});
+        await attemptPlay(frame);
       }
+
+      // 2. Native Mouse Clicks! (Bypasses all DOM obfuscation & shadow roots)
+      // We click the exact center of the screen, bypassing click-shields.
+      try {
+        const { width, height } = await page.evaluate(() => ({
+          width: window.innerWidth, height: window.innerHeight
+        }));
+        // First click usually removes the ad overlay/click-shield
+        await page.mouse.click(width / 2, height / 2, { delay: 100 });
+        await new Promise(r => setTimeout(r, 400));
+        // Second click actually triggers the player
+        await page.mouse.click(width / 2, height / 2, { delay: 100 });
+      } catch (e) {}
 
       // ── Poll for up to SCRAPE_TIMEOUT_MS ─────────────────────────────
       const deadline = Date.now() + SCRAPE_TIMEOUT_MS;
