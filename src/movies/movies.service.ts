@@ -762,7 +762,21 @@ export class MoviesService implements OnModuleInit {
       }
     }
 
-    return movie;
+    const allPlatforms: Array<'nflix' | 'nprime' | 'hotstar'> = ['nflix', 'nprime', 'hotstar'];
+    const platformLabel: Record<string, string> = { nflix: 'Netflix', nprime: 'Prime Video', hotstar: 'Hotstar' };
+    const availablePlatforms: string[] = [];
+    const tmdbId = movie.tmdbId;
+    
+    if (tmdbId) {
+      for (const p of allPlatforms) {
+        const catalogId = this.state[p].tmdbIdIndex.get(tmdbId);
+        if (catalogId && this.state[p].movies.has(catalogId)) {
+          availablePlatforms.push(platformLabel[p]);
+        }
+      }
+    }
+
+    return { ...movie, availablePlatforms };
   }
 
   async getSeasonEpisodes(id: string, seasonNumber: number, platform: 'nflix' | 'nprime' | 'hotstar' = 'nflix'): Promise<Episode[]> {
@@ -869,7 +883,36 @@ export class MoviesService implements OnModuleInit {
       
       // Sort by popularity and release year so the most relevant/popular matches are first
       filtered = filtered.sort((a, b) => b.matchScore - a.matchScore || b.releaseYear - a.releaseYear);
-      
+
+      // ── Cross-Platform Availability Check ──────────────────────────────────
+      // For each TMDB result, check if the title exists in any platform catalog
+      // and annotate it with availablePlatforms + prefer the catalog entry which
+      // has richer metadata (sources, embedUrl, etc.).
+      const allPlatforms: Array<'nflix' | 'nprime' | 'hotstar'> = ['nflix', 'nprime', 'hotstar'];
+      const platformLabel: Record<string, string> = { nflix: 'Netflix', nprime: 'Prime Video', hotstar: 'Hotstar' };
+
+      filtered = filtered.map((movie) => {
+        const tmdbId = movie.tmdbId;
+        const availablePlatforms: string[] = [];
+        let enrichedMovie = { ...movie };
+
+        for (const p of allPlatforms) {
+          // Check by tmdbId index first (O(1))
+          const catalogId = tmdbId ? this.state[p].tmdbIdIndex.get(tmdbId) : undefined;
+          const catalogMovie = catalogId ? this.state[p].movies.get(catalogId) : undefined;
+          if (catalogMovie) {
+            availablePlatforms.push(platformLabel[p]);
+            // Prefer catalog entry for current platform (richer metadata)
+            if (p === platform) {
+              enrichedMovie = { ...catalogMovie, availablePlatforms: [] };
+            }
+          }
+        }
+
+        return { ...enrichedMovie, availablePlatforms };
+      });
+      // ──────────────────────────────────────────────────────────────────────
+
       const person = data.results.find((item: any) => item.media_type === 'person' && item.profile_path);
       let actor = undefined;
       if (person) {

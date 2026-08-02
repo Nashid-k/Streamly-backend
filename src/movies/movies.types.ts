@@ -57,6 +57,8 @@ export interface Movie {
   audioLanguages: string[];
   subtitleLanguages: string[];
   platform?: string;
+  /** Populated by cross-platform search — which platforms carry this title */
+  availablePlatforms?: string[];
 }
 
 export interface Category {
