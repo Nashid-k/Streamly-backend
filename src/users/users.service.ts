@@ -1,7 +1,7 @@
 import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { mkdir, readFile, rename, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
-import { User, UserPreferences, UserProfile } from './users.types';
+import { User, UserPreferences, UserProfile, ContinueWatchingItem } from './users.types';
 
 @Injectable()
 export class UsersService implements OnModuleInit {
@@ -40,6 +40,7 @@ export class UsersService implements OnModuleInit {
     ],
     currentProfileId: 'prof-1',
     myList: [],
+    continueWatching: [],
   };
 
   getUser(): User {
@@ -61,6 +62,12 @@ export class UsersService implements OnModuleInit {
 
       const saved = JSON.parse(contents) as Partial<User>;
       if (Array.isArray(saved.myList)) this.user.myList = saved.myList.filter((id): id is string => typeof id === 'string');
+      if (Array.isArray(saved.continueWatching)) {
+        this.user.continueWatching = saved.continueWatching.filter(
+          (item): item is ContinueWatchingItem =>
+            item && typeof item.movieId === 'string' && typeof item.progressSeconds === 'number',
+        );
+      }
       if (typeof saved.currentProfileId === 'string' && this.user.profiles.some((profile) => profile.id === saved.currentProfileId)) {
         this.user.currentProfileId = saved.currentProfileId;
       }
@@ -82,6 +89,7 @@ export class UsersService implements OnModuleInit {
     const data = JSON.stringify({
       currentProfileId: this.user.currentProfileId,
       myList: this.user.myList,
+      continueWatching: this.user.continueWatching,
       preferencesByProfile: this.user.preferencesByProfile,
     });
     const directory = join(this.statePath, '..');
@@ -137,5 +145,34 @@ export class UsersService implements OnModuleInit {
     this.user.preferencesByProfile[this.user.currentProfileId] = this.normalizePreferences(preferences);
     this.persist();
     return this.user.preferencesByProfile[this.user.currentProfileId];
+  }
+
+  // ─── Continue Watching (guest / single-user mode) ─────────────────────────
+
+  getContinueWatching(): ContinueWatchingItem[] {
+    return (this.user.continueWatching || []).sort((a, b) => b.updatedAt - a.updatedAt);
+  }
+
+  updateContinueWatching(item: ContinueWatchingItem): ContinueWatchingItem[] {
+    this.user.continueWatching = this.user.continueWatching || [];
+    const idx = this.user.continueWatching.findIndex((c) => c.movieId === item.movieId);
+    if (idx >= 0) {
+      this.user.continueWatching[idx] = item;
+    } else {
+      this.user.continueWatching.unshift(item);
+    }
+    this.user.continueWatching = this.user.continueWatching
+      .sort((a, b) => b.updatedAt - a.updatedAt)
+      .slice(0, 20);
+    this.persist();
+    return this.user.continueWatching;
+  }
+
+  removeContinueWatching(movieId: string): ContinueWatchingItem[] {
+    this.user.continueWatching = (this.user.continueWatching || []).filter(
+      (c) => c.movieId !== movieId,
+    );
+    this.persist();
+    return this.user.continueWatching;
   }
 }

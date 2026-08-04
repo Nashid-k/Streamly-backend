@@ -1,5 +1,6 @@
-import { Controller, Get, Post, Body, Param } from '@nestjs/common';
+import { Controller, Get, Post, Delete, Body, Param } from '@nestjs/common';
 import { UsersService } from './users.service';
+import { ContinueWatchingItem } from './users.types';
 
 @Controller('api/user')
 export class UsersController {
@@ -28,5 +29,22 @@ export class UsersController {
   @Post('preferences')
   updatePreferences(@Body() prefs: any) {
     return this.usersService.updatePreferences(prefs);
+  }
+
+  // ─── Continue Watching (guest mode, no auth required) ─────────────────────
+
+  @Get('continue-watching')
+  getContinueWatching() {
+    return this.usersService.getContinueWatching();
+  }
+
+  @Post('continue-watching')
+  updateContinueWatching(@Body() item: ContinueWatchingItem) {
+    return this.usersService.updateContinueWatching(item);
+  }
+
+  @Delete('continue-watching/:movieId')
+  removeContinueWatching(@Param('movieId') movieId: string) {
+    return this.usersService.removeContinueWatching(movieId);
   }
 }

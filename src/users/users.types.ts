@@ -12,6 +12,16 @@ export interface UserProfile {
   isKids: boolean;
 }
 
+export interface ContinueWatchingItem {
+  movieId: string;
+  title: string;
+  posterUrl: string;
+  progressSeconds: number;
+  durationSeconds: number;
+  platform: string;
+  updatedAt: number;
+}
+
 export interface User {
   id: string;
   email: string;
@@ -19,5 +29,6 @@ export interface User {
   profiles: UserProfile[];
   currentProfileId: string;
   myList: string[]; // array of movie IDs
+  continueWatching: ContinueWatchingItem[];
   preferencesByProfile?: Record<string, UserPreferences>;
 }

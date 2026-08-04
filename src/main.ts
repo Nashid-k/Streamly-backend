@@ -21,7 +21,7 @@ async function bootstrap() {
   // Keep browser access scoped to this application's frontend.
   app.enableCors({
     origin: allowedOrigins,
-    methods: 'GET,HEAD,POST,OPTIONS',
+    methods: 'GET,HEAD,POST,DELETE,OPTIONS',
     exposedHeaders: ['Cache-Control'],
   });
 

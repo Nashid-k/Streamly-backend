@@ -949,4 +949,99 @@ export class MoviesService implements OnModuleInit {
     const current = await this.getMovieById(id, platform);
     return (await this.getAllMovies(platform)).filter((item) => item.id !== current.id && item.genres.some((genre) => current.genres.includes(genre))).slice(0, 6);
   }
+
+  // ─── Advanced Recommendations Engine ──────────────────────────────────
+
+  async getRecommendations(id: string, platform: 'nflix' | 'nprime' | 'hotstar' = 'nflix'): Promise<Movie[]> {
+    await this.ensureCatalog(platform);
+    let source: Movie;
+    try {
+      source = await this.getMovieById(id, platform);
+    } catch {
+      return [];
+    }
+
+    const allMovies = await this.getAllMovies(platform);
+
+    const scored = allMovies
+      .filter((m) => m.id !== source.id)
+      .map((m) => {
+        let score = 0;
+
+        // Genre overlap (+20 per matching genre)
+        const genreOverlap = m.genres.filter((g) => source.genres.includes(g)).length;
+        score += genreOverlap * 20;
+
+        // Same director (+15)
+        if (source.director && m.director && source.director !== 'Unknown' && m.director !== 'Unknown') {
+          if (source.director.toLowerCase() === m.director.toLowerCase()) score += 15;
+        }
+
+        // Overlapping cast (+10 per shared member, max 30)
+        const sourceCastNames = source.cast.map((c) =>
+          typeof c === 'string' ? c.toLowerCase() : (c as any).name?.toLowerCase() || '',
+        ).filter(Boolean);
+        const targetCastNames = m.cast.map((c) =>
+          typeof c === 'string' ? c.toLowerCase() : (c as any).name?.toLowerCase() || '',
+        ).filter(Boolean);
+        const castOverlap = sourceCastNames.filter((n) => targetCastNames.includes(n)).length;
+        score += Math.min(castOverlap * 10, 30);
+
+        // Same decade (+5)
+        if (Math.abs(m.releaseYear - source.releaseYear) <= 10) score += 5;
+
+        // Similar popularity/matchScore (+10 if within 15 points)
+        if (Math.abs(m.matchScore - source.matchScore) <= 15) score += 10;
+
+        // Boost trending/popular (+5)
+        if (m.isTrending || m.isPopular || m.isTop10) score += 5;
+
+        // Boost same media type (movie vs series)
+        if (m.isSeries === source.isSeries) score += 8;
+
+        // Boost same anime flag
+        if (m.isAnime === source.isAnime) score += 5;
+
+        return { ...m, _score: score };
+      })
+      .filter((m) => m._score > 0)
+      .sort((a, b) => b._score - a._score)
+      .slice(0, 20)
+      .map(({ _score: _, ...m }) => m);
+
+    return scored;
+  }
+
+  // ─── Intro Skip Timings ──────────────────────────────────────────
+
+  async getIntroTimings(
+    id: string,
+    season?: number,
+    episode?: number,
+    platform: 'nflix' | 'nprime' | 'hotstar' = 'nflix',
+  ): Promise<{ hasIntro: boolean; startSeconds: number; endSeconds: number }> {
+    try {
+      await this.ensureCatalog(platform);
+      const movie = await this.getMovieById(id, platform);
+
+      // Only series episodes typically have intros
+      if (!movie.isSeries || !season || !episode) {
+        return { hasIntro: false, startSeconds: 0, endSeconds: 0 };
+      }
+
+      // Heuristic: intros are typically 0–90 seconds
+      // Use a deterministic seed based on id+season+episode for stable results
+      const seed = `${id}-s${season}e${episode}`.split('').reduce((acc, c) => acc + c.charCodeAt(0), 0);
+      const introLength = 60 + (seed % 30); // 60–89 seconds
+
+      return {
+        hasIntro: true,
+        startSeconds: 0,
+        endSeconds: introLength,
+      };
+    } catch {
+      return { hasIntro: false, startSeconds: 0, endSeconds: 0 };
+    }
+  }
 }
+

@@ -243,4 +243,28 @@ export class MoviesController {
     const season = Math.min(Math.max(Number.parseInt(seasonNumber, 10) || 1, 1), 50);
     return this.moviesService.getSeasonEpisodes(id, season, platform);
   }
+
+  @Get(':id/recommendations')
+  async getRecommendations(
+    @Res({ passthrough: true }) res: Response,
+    @Param('id') id: string,
+    @Query('platform') platform: 'nflix' | 'nprime' | 'hotstar' = 'nflix',
+  ): Promise<Movie[]> {
+    setCache(res, 300);
+    return this.moviesService.getRecommendations(id, platform);
+  }
+
+  @Get(':id/intro')
+  async getIntroTimings(
+    @Res({ passthrough: true }) res: Response,
+    @Param('id') id: string,
+    @Query('season') season?: string,
+    @Query('episode') episode?: string,
+    @Query('platform') platform: 'nflix' | 'nprime' | 'hotstar' = 'nflix',
+  ) {
+    setCache(res, 86400); // 24-hour cache for intro timings
+    const s = season ? parseInt(season, 10) : undefined;
+    const e = episode ? parseInt(episode, 10) : undefined;
+    return this.moviesService.getIntroTimings(id, s, e, platform);
+  }
 }
