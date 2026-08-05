@@ -872,59 +872,35 @@ export class MoviesService implements OnModuleInit {
     }
     
     try {
-      const data = await this.tmdb('search/multi', { query: normalized, include_adult: 'false' });
-      
-      const movieResults: Movie[] = data.results
-        .filter((item: any) => item.media_type === 'movie' || item.media_type === 'tv')
-        .map((item: any) => this.toMovie(item, item.media_type))
-        .filter((m: Movie) => !!m.posterUrl || !!m.backdropUrl);
-        
-      let filtered = this.filterGenre(movieResults, genre);
-      
-      // Sort by popularity and release year so the most relevant/popular matches are first
-      filtered = filtered.sort((a, b) => b.matchScore - a.matchScore || b.releaseYear - a.releaseYear);
-
-      // ── Cross-Platform Availability Check ──────────────────────────────────
-      // For each TMDB result, check if the title exists in any platform catalog
-      // and annotate it with availablePlatforms + prefer the catalog entry which
-      // has richer metadata (sources, embedUrl, etc.).
+      const combinedMoviesMap = new Map<string, Movie>();
       const allPlatforms: Array<'nflix' | 'nprime' | 'hotstar'> = ['nflix', 'nprime', 'hotstar'];
       const platformLabel: Record<string, string> = { nflix: 'Netflix', nprime: 'Prime Video', hotstar: 'Hotstar' };
-
-      filtered = filtered.map((movie) => {
-        const tmdbId = movie.tmdbId;
-        const availablePlatforms: string[] = [];
-        let enrichedMovie = { ...movie };
-
-        for (const p of allPlatforms) {
-          // Check by tmdbId index first (O(1))
-          const catalogId = tmdbId ? this.state[p].tmdbIdIndex.get(tmdbId) : undefined;
-          const catalogMovie = catalogId ? this.state[p].movies.get(catalogId) : undefined;
-          if (catalogMovie) {
-            availablePlatforms.push(platformLabel[p]);
-            // Prefer catalog entry for current platform (richer metadata)
-            if (p === platform) {
-              enrichedMovie = { ...catalogMovie, availablePlatforms: [] };
-            }
+      
+      for (const p of allPlatforms) {
+          const pMovies = await this.getAllMovies(p); 
+          for (const movie of pMovies) {
+              const key = movie.tmdbId || movie.title; 
+              if (!combinedMoviesMap.has(key)) {
+                  combinedMoviesMap.set(key, { ...movie, availablePlatforms: [platformLabel[p]] });
+              } else {
+                  const existing = combinedMoviesMap.get(key)!;
+                  if (!existing.availablePlatforms!.includes(platformLabel[p])) {
+                       existing.availablePlatforms!.push(platformLabel[p]);
+                  }
+              }
           }
-        }
-
-        return { ...enrichedMovie, availablePlatforms };
-      });
-      // ──────────────────────────────────────────────────────────────────────
-
-      const person = data.results.find((item: any) => item.media_type === 'person' && item.profile_path);
-      let actor = undefined;
-      if (person) {
-        actor = {
-          id: String(person.id),
-          name: person.name,
-          profileUrl: this.image(person.profile_path, 'w500'),
-          knownFor: person.known_for?.map((k: any) => k.title || k.name).filter(Boolean).join(', ') || 'Known for acting'
-        };
       }
+      
+      let results = Array.from(combinedMoviesMap.values()).filter(m => 
+          m.title.toLowerCase().includes(normalized) || 
+          (m.originalTitle && m.originalTitle.toLowerCase().includes(normalized)) ||
+          m.genres.some(g => g.toLowerCase().includes(normalized)) ||
+          (m.cast && m.cast.some((c: any) => c.name.toLowerCase().includes(normalized)))
+      );
+      
+      results = this.filterGenre(results, genre);
 
-      const resultObj = { movies: filtered, actor };
+      const resultObj = { movies: results, actor: undefined };
       
       // Cache Search Result (LRU 100 limit per platform)
       if (this.state[platform].searchCache.size > 100) {

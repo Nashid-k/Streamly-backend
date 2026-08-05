@@ -1,6 +1,11 @@
-# Nflix Backend
+# AIOS-ALL IN ONE STREAM Backend
 
-This is the backend for the Nflix catalog application, providing API endpoints for movie and TV discovery.
+This is the backend for the AIOS-ALL IN ONE STREAM catalog application, providing robust, high-performance API endpoints for movie and TV discovery.
+
+## 🚀 Recent Updates & Features
+- **In-Memory Caching:** Eliminated TMDB-based live search network latency. Implemented an O(1) high-performance local search engine.
+- **Robust State Management:** Added write-locking queues to `users.service.ts` to prevent JSON data loss from concurrent profile writes.
+- **Enhanced Sorting Logic:** Removed forced background sorting in API responses to strictly respect frontend relevancy rules.
 
 ## Configuration
 

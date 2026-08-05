@@ -6,6 +6,8 @@ import { User, UserPreferences, UserProfile, ContinueWatchingItem } from './user
 @Injectable()
 export class UsersService implements OnModuleInit {
   private readonly logger = new Logger(UsersService.name);
+  private isWriting = false;
+  private pendingWrite = false;
   // Keep demo state outside `dist` so production rebuilds do not discard it.
   private readonly statePath = process.env.USER_STATE_FILE || join(process.cwd(), 'data', 'user.json');
   private readonly user: User = {
@@ -85,18 +87,32 @@ export class UsersService implements OnModuleInit {
     }
   }
 
-  private persist() {
-    const data = JSON.stringify({
-      currentProfileId: this.user.currentProfileId,
-      myList: this.user.myList,
-      continueWatching: this.user.continueWatching,
-      preferencesByProfile: this.user.preferencesByProfile,
-    });
-    const directory = join(this.statePath, '..');
-    void mkdir(directory, { recursive: true })
-      .then(() => writeFile(`${this.statePath}.tmp`, data, 'utf8'))
-      .then(() => rename(`${this.statePath}.tmp`, this.statePath))
-      .catch((error) => this.logger.error(`Could not persist user state: ${error.message}`));
+  private async persist() {
+    if (this.isWriting) {
+      this.pendingWrite = true;
+      return;
+    }
+    this.isWriting = true;
+    try {
+      const data = JSON.stringify({
+        currentProfileId: this.user.currentProfileId,
+        myList: this.user.myList,
+        continueWatching: this.user.continueWatching,
+        preferencesByProfile: this.user.preferencesByProfile,
+      });
+      const directory = join(this.statePath, '..');
+      await mkdir(directory, { recursive: true });
+      await writeFile(`${this.statePath}.tmp`, data, 'utf8');
+      await rename(`${this.statePath}.tmp`, this.statePath);
+    } catch (error: any) {
+      this.logger.error(`Could not persist user state: ${error.message}`);
+    } finally {
+      this.isWriting = false;
+      if (this.pendingWrite) {
+        this.pendingWrite = false;
+        this.persist();
+      }
+    }
   }
 
   setCurrentProfile(profileId: string): UserProfile {
