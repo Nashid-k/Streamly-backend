@@ -891,12 +891,39 @@ export class MoviesService implements OnModuleInit {
           }
       }
       
-      let results = Array.from(combinedMoviesMap.values()).filter(m => 
-          m.title.toLowerCase().includes(normalized) || 
-          (m.originalTitle && m.originalTitle.toLowerCase().includes(normalized)) ||
-          m.genres.some(g => g.toLowerCase().includes(normalized)) ||
-          (m.cast && m.cast.some((c: any) => c.name.toLowerCase().includes(normalized)))
-      );
+      let resultsWithScores = Array.from(combinedMoviesMap.values()).map(m => {
+          let score = 0;
+          const t = m.title.toLowerCase();
+          
+          if (t === normalized) score += 100;
+          else if (t.startsWith(normalized)) score += 50;
+          else if (t.includes(normalized)) score += 10;
+          
+          if (m.originalTitle && m.originalTitle.toLowerCase().includes(normalized)) score += 5;
+          
+          if (m.genres && m.genres.some(g => g.toLowerCase().includes(normalized))) score += 5;
+          if (m.tags && m.tags.some(g => g.toLowerCase().includes(normalized))) score += 3;
+          
+          if (m.cast && m.cast.some((c: any) => typeof c === 'string' ? c.toLowerCase().includes(normalized) : c.name?.toLowerCase().includes(normalized))) score += 8;
+          if (m.director && m.director.toLowerCase().includes(normalized)) score += 8;
+          if (m.description && m.description.toLowerCase().includes(normalized)) score += 1;
+          
+          // Fuzzy token matching
+          const tokens = normalized.split(/[\s-]+/).filter(Boolean);
+          if (tokens.length > 0) {
+             const titleTokens = t.split(/[\s-]+/);
+             const matchedTokens = tokens.filter(tk => titleTokens.some(ttk => ttk.includes(tk)));
+             if (matchedTokens.length === tokens.length) score += 15;
+             else if (matchedTokens.length > 0) score += (matchedTokens.length * 2);
+          }
+
+          return { movie: m, score };
+      });
+      
+      let results = resultsWithScores
+          .filter(item => item.score > 0)
+          .sort((a, b) => b.score - a.score)
+          .map(item => item.movie);
       
       results = this.filterGenre(results, genre);
 
