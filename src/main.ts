@@ -13,7 +13,7 @@ async function bootstrap() {
   
   app.use(compression());
   
-  const allowedOrigins = (process.env.FRONTEND_URL || 'http://localhost:3000')
+  const allowedOrigins = (process.env.FRONTEND_URL || 'http://localhost:3000,https://streamly-gules.vercel.app')
     .split(',')
     .map((origin) => origin.trim())
     .filter(Boolean);
