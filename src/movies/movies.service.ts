@@ -407,7 +407,15 @@ export class MoviesService implements OnModuleInit {
     
     // Shuffle the curated rails so the homepage looks dynamic
     const shuffledCurated = curatedRails.sort(() => Math.random() - 0.5).slice(0, 10);
-    const shuffledRegional = regionalRails.sort(() => Math.random() - 0.5).slice(0, 3);
+    // Increased regional rails from 3 to 8 to ensure Tamil, Malayalam, Hindi, etc., always show up
+    const shuffledRegional = regionalRails.sort(() => Math.random() - 0.5).slice(0, 8);
+
+    const indianCinemaRail = {
+      id: 'indian-cinema-hits',
+      name: 'South Indian & Bollywood Hits',
+      mediaType: 'movie' as const,
+      path: `discover/movie?${baseDiscoverMovie}&with_original_language=hi|ta|te|ml|kn&sort_by=popularity.desc&vote_count.gte=100`
+    };
 
     return [
       // 1. Movies Domain
@@ -430,7 +438,10 @@ export class MoviesService implements OnModuleInit {
       // 4. Dynamic Editorial Genres
       ...shuffledCurated,
 
-      // 5. Dynamic Regional
+      // 5. Massive Indian Cinema Rail (Combined)
+      indianCinemaRail,
+
+      // 6. Dynamic Regional Specific Rails
       ...shuffledRegional,
     ];
   }
