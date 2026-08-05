@@ -686,6 +686,20 @@ export class MoviesService implements OnModuleInit {
     if (!movie) {
       movie = [...this.state[platform].movies.values()].find((item) => item.tmdbId === id || item.id === id);
     }
+
+    // Cross-platform fallback: If it's a search result or from another platform, check all states
+    if (!movie) {
+      for (const p of ['nflix', 'nprime', 'hotstar'] as Array<'nflix' | 'nprime' | 'hotstar'>) {
+        if (p === platform) continue;
+        movie = this.state[p].movies.get(id);
+        if (!movie) {
+           const internalId = this.state[p].tmdbIdIndex.get(id);
+           if (internalId) movie = this.state[p].movies.get(internalId);
+        }
+        if (movie) break;
+      }
+    }
+
     if (!movie) throw new NotFoundException(`Title "${id}" was not found.`);
 
     // Dynamically enrich movie details (credits, images & YouTube trailer video) from TMDB on demand
