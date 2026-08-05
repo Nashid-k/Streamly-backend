@@ -368,7 +368,7 @@ export class MoviesService implements OnModuleInit {
     const recentDateIso = d.toISOString().split('T')[0];
     const regionalLanguages = [
       ['hi', 'Hindi'], ['ta', 'Tamil'], ['te', 'Telugu'], ['ml', 'Malayalam'],
-      ['kn', 'Kannada'], ['mr', 'Marathi'], ['bn', 'Bengali'],
+      ['kn', 'Kannada'], ['mr', 'Marathi'], ['bn', 'Bengali'], ['ar', 'Arabic'],
     ] as const;
 
     const regionalRails = regionalLanguages.flatMap(([code, name]) => [
