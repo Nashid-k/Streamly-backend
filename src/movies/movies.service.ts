@@ -578,10 +578,32 @@ export class MoviesService implements OnModuleInit {
     }
   }
 
+  private toLightweightMovie(m: Movie): Partial<Movie> {
+    return {
+      id: m.id,
+      tmdbId: m.tmdbId,
+      title: m.title,
+      posterUrl: m.posterUrl,
+      backdropUrl: m.backdropUrl,
+      matchScore: m.matchScore,
+      isRecentlyAdded: m.isRecentlyAdded,
+      isLeavingSoon: m.isLeavingSoon,
+      isUpcoming: m.isUpcoming,
+      trailerUrl: m.trailerUrl,
+      maturityRating: m.maturityRating,
+      duration: m.duration,
+      isSeries: m.isSeries,
+      logoUrl: m.logoUrl,
+      releaseYear: m.releaseYear,
+      top10Rank: m.top10Rank,
+    };
+  }
+
   async getAllMovies(platform: 'nflix' | 'nprime' | 'hotstar' = 'nflix') { 
     await this.ensureCatalog(platform); 
     const allMovies = this.state[platform].categories.flatMap(c => c.movies);
-    return Array.from(new Map(allMovies.map(m => [m.id, m])).values());
+    const uniqueMovies = Array.from(new Map(allMovies.map(m => [m.id, m])).values());
+    return uniqueMovies.map(m => this.toLightweightMovie(m) as Movie);
   }
 
   async getTop10Movies(platform: 'nflix' | 'nprime' | 'hotstar' = 'nflix'): Promise<Movie[]> {
@@ -591,7 +613,8 @@ export class MoviesService implements OnModuleInit {
     
     return uniqueMovies
       .sort((a, b) => b.matchScore - a.matchScore || b.releaseYear - a.releaseYear)
-      .slice(0, 10);
+      .slice(0, 10)
+      .map(m => this.toLightweightMovie(m) as Movie);
   }
   async getFeaturedMovie(platform: 'nflix' | 'nprime' | 'hotstar' = 'nflix'): Promise<Movie | null> {
     await this.ensureCatalog(platform);
@@ -611,7 +634,13 @@ export class MoviesService implements OnModuleInit {
     }
     return feat;
   }
-  async getCategories(platform: 'nflix' | 'nprime' | 'hotstar' = 'nflix') { await this.ensureCatalog(platform); return this.state[platform].categories; }
+  async getCategories(platform: 'nflix' | 'nprime' | 'hotstar' = 'nflix'): Promise<Category[]> {
+    await this.ensureCatalog(platform);
+    return this.state[platform].categories.map(cat => ({
+      ...cat,
+      movies: cat.movies.map(m => this.toLightweightMovie(m) as Movie)
+    }));
+  }
 
   /**
    * TMDB video lists can include clips, featurettes, interviews and entries from
