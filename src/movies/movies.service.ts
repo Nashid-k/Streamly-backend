@@ -56,18 +56,12 @@ export class MoviesService implements OnModuleInit {
       return;
     }
     
-    // 1. Detect User Location
+    // 1. Force Region to IN (India) for maximum regional (Hotstar, Tamil, Hindi) + global content
     try {
-      this.logger.log('Detecting user location for region-aware content...');
-      const geo = await fetch('https://ipapi.co/json/');
-      if (geo.ok) {
-        const data = await geo.json();
-        if (data.country_code) {
-          this.region = data.country_code;
-          this.logger.log(`Location detected: ${this.region} (${data.country_name})`);
-        }
-      }
+      this.logger.log('Setting region to IN for maximum catalog availability...');
+      this.region = 'IN';
     } catch (e) {
+      this.region = 'IN';
       this.logger.warn(`Could not detect location: ${e}. Using default region: ${this.region}`);
     }
 
