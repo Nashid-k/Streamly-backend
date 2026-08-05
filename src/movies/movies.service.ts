@@ -596,6 +596,9 @@ export class MoviesService implements OnModuleInit {
       logoUrl: m.logoUrl,
       releaseYear: m.releaseYear,
       top10Rank: m.top10Rank,
+      genres: m.genres || [],
+      tags: m.tags || [],
+      audioLanguages: m.audioLanguages || [],
     };
   }
 
@@ -793,9 +796,6 @@ export class MoviesService implements OnModuleInit {
 
         if (movie.isSeries) {
           movie.seasonsCount = details.number_of_seasons || 1;
-          if (!movie.episodes?.length) {
-            movie.episodes = await this.getSeasonEpisodes(id, 1).catch(() => []);
-          }
         }
       } catch (err) {
         this.logger.warn(`Could not enrich metadata for ${id}: ${err}`);

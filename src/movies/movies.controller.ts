@@ -217,7 +217,7 @@ export class MoviesController {
     @Param('id') id: string,
     @Query('platform') platform: 'nflix' | 'nprime' | 'hotstar' = 'nflix'
   ): Promise<Movie> {
-    setCache(res, 60);
+    setCache(res, 86400); // 24-hour cache for metadata
     return this.moviesService.getMovieById(id, platform);
   }
 
@@ -227,7 +227,7 @@ export class MoviesController {
     @Param('id') id: string,
     @Query('platform') platform: 'nflix' | 'nprime' | 'hotstar' = 'nflix'
   ): Promise<Movie[]> {
-    setCache(res, 60);
+    setCache(res, 86400); // 24-hour cache
     return this.moviesService.getSimilarMovies(id, platform);
   }
 
@@ -238,7 +238,7 @@ export class MoviesController {
     @Param('seasonNumber') seasonNumber: string,
     @Query('platform') platform: 'nflix' | 'nprime' | 'hotstar' = 'nflix'
   ) {
-    setCache(res, 60);
+    setCache(res, 86400); // 24-hour cache for static episodes
     // Clamp season number to a sane range to prevent abuse
     const season = Math.min(Math.max(Number.parseInt(seasonNumber, 10) || 1, 1), 50);
     return this.moviesService.getSeasonEpisodes(id, season, platform);
