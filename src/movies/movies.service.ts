@@ -600,6 +600,9 @@ export class MoviesService implements OnModuleInit {
       genres: m.genres || [],
       tags: m.tags || [],
       audioLanguages: m.audioLanguages || [],
+      sources: m.sources || [],
+      videoUrl: m.videoUrl,
+      embedUrl: m.embedUrl,
     };
   }
 
