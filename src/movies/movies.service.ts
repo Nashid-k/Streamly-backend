@@ -825,37 +825,16 @@ export class MoviesService implements OnModuleInit {
           videoUrl: this.encodeUrl(`https://vidsrc.pm/embed/tv/${movie.tmdbId}/${seasonNumber}/${ep.episode_number}`),
           embedUrl: this.encodeUrl(`https://vidsrc.pm/embed/tv/${movie.tmdbId}/${seasonNumber}/${ep.episode_number}`),
           sources: [
-            // ══ PRIMARY — single consistent Netflix-style player with built-in audio/subtitle/quality switching ══
-            { name: 'VidSrc',    url: `https://vidsrc.pm/embed/tv/${movie.tmdbId}/${seasonNumber}/${ep.episode_number}`,                                            type: 'stream' as const },
-            { name: 'VidSrc.in', url: `https://vidsrc.in/embed/tv/${movie.tmdbId}/${seasonNumber}/${ep.episode_number}`,                                            type: 'stream' as const },
-            { name: '2Embed',    url: `https://www.2embed.cc/embed/${movie.tmdbId}/${seasonNumber}/${ep.episode_number}`,                                              type: 'stream' as const },
-            // ══ FALLBACKS — each has its own player; use only when primary fails ══
-            { name: 'VidLink',   url: vidLinkUrl,                                                                     type: 'stream' as const },
-            { name: 'Club',      url: `https://moviesapi.club/tv/${movie.tmdbId}-${seasonNumber}-${ep.episode_number}`,                                                type: 'stream' as const },
-            { name: 'Main',      url: `https://multiembed.mov/directstream.php?video_id=${movie.tmdbId}&tmdb=1&s=${seasonNumber}&e=${ep.episode_number}`,              type: 'stream' as const },
-            { name: 'VidOra',    url: `https://vidora.su/tv/${movie.tmdbId}/${seasonNumber}/${ep.episode_number}`,                                                     type: 'stream' as const },
-            { name: 'Fade',      url: `https://fadeplayer.xyz/embed/tv/${movie.tmdbId}/${seasonNumber}/${ep.episode_number}`,                                          type: 'stream' as const },
-            { name: 'Nero',      url: `https://nerostreamingvid.com/embed/tv/${movie.tmdbId}/${seasonNumber}/${ep.episode_number}`,                                    type: 'stream' as const },
-            { name: 'Flixify',   url: `https://flixify.xyz/embed/tv/${movie.tmdbId}/${seasonNumber}/${ep.episode_number}`,                                             type: 'stream' as const },
-            { name: 'Astra',     url: `https://astrastream.xyz/embed/tv/${movie.tmdbId}/${seasonNumber}/${ep.episode_number}`,                                         type: 'stream' as const },
-            { name: 'VidPlay',   url: `https://vidplay.online/tv-shows/${movie.tmdbId}-${seasonNumber}-${ep.episode_number}/`,                                         type: 'stream' as const },
-            { name: 'PrimeWire', url: `https://primewire.tf/tv/${movie.tmdbId}/${seasonNumber}/${ep.episode_number}`,                                                  type: 'stream' as const },
-            { name: 'Sage',      url: `https://sagestreams.xyz/embed/tv/${movie.tmdbId}/${seasonNumber}/${ep.episode_number}`,                                         type: 'stream' as const },
-            { name: 'Aura',      url: `https://aurastream.xyz/embed/tv/${movie.tmdbId}/${seasonNumber}/${ep.episode_number}`,                                          type: 'stream' as const },
-            { name: 'Flix',        url: `https://flix.pm/embed/tv/${movie.tmdbId}/${seasonNumber}/${ep.episode_number}`,                                                 type: 'stream' as const },
-            { name: '4K',        url: `https://4kembed.me/embed/tv?tmdb=${movie.tmdbId}&season=${seasonNumber}&episode=${ep.episode_number}`,                         type: 'stream' as const },
-            { name: 'Yoru',      url: `https://yoru.vip/embed/tv/${movie.tmdbId}/${seasonNumber}/${ep.episode_number}`,                                                type: 'stream' as const },
-            { name: 'Mist',      url: `https://mist.stream/embed/tv/${movie.tmdbId}/${seasonNumber}/${ep.episode_number}`,                                             type: 'stream' as const },
-            { name: 'Pass',      url: `https://passembed.cc/embed/tv/${movie.tmdbId}/${seasonNumber}/${ep.episode_number}`,                                            type: 'stream' as const },
-            { name: 'Mistify',   url: `https://mistify.stream/embed/tv/${movie.tmdbId}/${seasonNumber}/${ep.episode_number}`,                                          type: 'stream' as const },
-            { name: 'Simplify',  url: `https://embed.simplify.re/tv/${movie.tmdbId}/${seasonNumber}/${ep.episode_number}`,                                             type: 'stream' as const },
-            { name: 'Asia',      url: `https://asiaplay.cc/embed/tv/${movie.tmdbId}/${seasonNumber}/${ep.episode_number}`,                                             type: 'stream' as const },
-            { name: 'Cine',      url: `https://cinestream.to/embed/tv/${movie.tmdbId}/${seasonNumber}/${ep.episode_number}`,                                           type: 'stream' as const },
-            { name: 'VidMux',    url: `https://vidmux.cc/embed/tv/${movie.tmdbId}/${seasonNumber}/${ep.episode_number}`,                                               type: 'stream' as const },
-            { name: 'Pablo',     url: `https://pablo.stream/embed/tv/${movie.tmdbId}/${seasonNumber}/${ep.episode_number}`,                                            type: 'stream' as const },
-            { name: 'Azute',     url: `https://azute.stream/embed/tv/${movie.tmdbId}/${seasonNumber}/${ep.episode_number}`,                                            type: 'stream' as const },
-            { name: '4K2',       url: `https://4khd.vip/embed/tv?tmdb=${movie.tmdbId}&season=${seasonNumber}&episode=${ep.episode_number}`,                           type: 'stream' as const },
-            { name: 'Prime',     url: `https://primestream.io/embed/tv/${movie.tmdbId}/${seasonNumber}/${ep.episode_number}`,                                          type: 'stream' as const }
+            { name: 'VidLink',     url: vidLinkUrl,                                                                                                              type: 'stream' as const },
+            { name: 'AutoEmbed',   url: `https://autoembed.co/tv/tmdb/${movie.tmdbId}-${seasonNumber}-${ep.episode_number}`,                                     type: 'stream' as const },
+            { name: 'VidSrc.me',   url: `https://vidsrc.me/embed/tv?tmdb=${movie.tmdbId}&season=${seasonNumber}&episode=${ep.episode_number}`,                   type: 'stream' as const },
+            { name: 'VidSrc.rip',  url: `https://vidsrc.rip/embed/tv/${movie.tmdbId}/${seasonNumber}/${ep.episode_number}`,                                      type: 'stream' as const },
+            { name: 'Vidsrc.io',   url: `https://vidsrc.io/embed/tv/${movie.tmdbId}/${seasonNumber}/${ep.episode_number}`,                                       type: 'stream' as const },
+            { name: '2Embed (Cineby)', url: `https://www.2embed.cc/embed/${movie.tmdbId}/${seasonNumber}/${ep.episode_number}`,                                  type: 'stream' as const },
+            { name: 'VidSrc',      url: `https://vidsrc.pm/embed/tv/${movie.tmdbId}/${seasonNumber}/${ep.episode_number}`,                                       type: 'stream' as const },
+            { name: 'Mapple (4KHD)',   url: `https://www.2embed.cc/embed/${movie.tmdbId}/${seasonNumber}/${ep.episode_number}#mapple`,                           type: 'stream' as const },
+            { name: 'Main',        url: `https://multiembed.mov/directstream.php?video_id=${movie.tmdbId}&tmdb=1&s=${seasonNumber}&e=${ep.episode_number}`,      type: 'stream' as const },
+            { name: 'Prime',       url: `https://primestream.io/embed/tv/${movie.tmdbId}/${seasonNumber}/${ep.episode_number}`,                                  type: 'stream' as const }
         ].map(s => ({ ...s, url: this.encodeUrl(s.url) }))
       };
     });
