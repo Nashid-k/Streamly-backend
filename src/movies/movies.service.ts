@@ -15,15 +15,15 @@ export class MoviesService implements OnModuleInit {
   private readonly baseUrl = process.env.TMDB_BASE_URL || 'https://api.tmdb.org/3';
   private readonly fallbackBaseUrls = [
     'https://api.tmdb.org/3',
-    'http://api.themoviedb.org/3',
-    'http://api.tmdb.org/3',
+    
+    
     'https://api.themoviedb.org/3',
   ];
   private readonly imageBaseUrl = process.env.TMDB_IMAGE_BASE_URL || 'https://image.tmdb.org/t/p';
   private readonly language = process.env.TMDB_LANGUAGE || 'en-US';
   private region = process.env.TMDB_REGION || 'US';
   private readonly readToken = process.env.TMDB_READ_TOKEN;
-  private readonly apiKey = process.env.TMDB_API_KEY || '522f1f08eda5e03bf93100ba29471d5d';
+  private readonly apiKey = process.env.TMDB_API_KEY || '';
   private readonly pagesPerRail = this.parsePositiveInt(process.env.TMDB_CATALOG_PAGES, 3, 1, 20);
   private readonly itemsPerRail = this.parsePositiveInt(process.env.TMDB_ITEMS_PER_RAIL, 40, 1, 400);
   private readonly requestTimeoutMs = this.parsePositiveInt(process.env.TMDB_REQUEST_TIMEOUT_MS, 15_000, 1_000, 60_000);
@@ -39,8 +39,8 @@ export class MoviesService implements OnModuleInit {
 
   private encodeUrl(url: string): string {
     if (!url) return '';
-    const xorKey = 42;
-    const obfuscated = url.split('').map(char => String.fromCharCode(char.charCodeAt(0) ^ xorKey)).join('');
+    const secret = process.env.URL_ENCRYPTION_KEY || 'STREAMLY_SECURE';
+    const obfuscated = url.split('').map((char, i) => String.fromCharCode(char.charCodeAt(0) ^ secret.charCodeAt(i % secret.length))).join('');
     return Buffer.from(obfuscated).toString('base64');
   }
 
@@ -344,9 +344,11 @@ export class MoviesService implements OnModuleInit {
 
   async refreshCatalog(platform: "nflix" | "nprime" | "hotstar" = "nflix") {
     const state = this.state[platform];
+    state.searchCache.clear(); // Clear search cache to prevent memory leaks
     if (state.refreshInFlight) return state.refreshInFlight;
 
-    state.refreshInFlight = this.loadCatalog(platform).finally(() => {
+    const timeoutPromise = new Promise<void>((_, reject) => setTimeout(() => reject(new Error('Refresh Timeout')), 120000));
+    state.refreshInFlight = Promise.race([this.loadCatalog(platform), timeoutPromise]).finally(() => {
       state.refreshInFlight = null;
     });
     return state.refreshInFlight;
@@ -453,14 +455,19 @@ export class MoviesService implements OnModuleInit {
       const categories = await Promise.all(dynamicRails.map(async (rail) => {
         const isUpcomingRail = rail.id.includes('upcoming');
         const pageCount = isUpcomingRail ? 8 : rail.pages ?? this.pagesPerRail;
-        const pages = await Promise.all(
-          Array.from({ length: pageCount }, (_, index) =>
-            this.tmdb(rail.path, { page: String(index + 1) }).catch((err) => {
-              this.logger.warn(`Failed page ${index + 1} for ${rail.id}: ${err.message}`);
+        const pageIndexes = Array.from({ length: pageCount }, (_, i) => i + 1);
+        const pages = [];
+        for (let i = 0; i < pageIndexes.length; i += 3) {
+          const chunk = pageIndexes.slice(i, i + 3);
+          const chunkResults = await Promise.all(chunk.map(idx => 
+            this.tmdb(rail.path, { page: String(idx) }).catch((err) => {
+              this.logger.warn(`Failed page ${idx} for ${rail.id}: ${err.message}`);
               return { results: [] };
             })
-          )
-        );
+          ));
+          pages.push(...chunkResults);
+          if (i + 3 < pageIndexes.length) await new Promise(r => setTimeout(r, 250)); // Rate limit pause
+        }
         const allItems = pages.flatMap((page: any) => page.results || []);
 
         const uniqueTitles = new Map<string, Movie>();
@@ -599,14 +606,18 @@ export class MoviesService implements OnModuleInit {
   async getAllMovies(platform: 'nflix' | 'nprime' | 'hotstar' = 'nflix') { 
     await this.ensureCatalog(platform); 
     const allMovies = this.state[platform].categories.flatMap(c => c.movies);
-    const uniqueMovies = Array.from(new Map(allMovies.map(m => [m.id, m])).values());
+    const uniqueMap = new Map<string, Movie>();
+    for (const m of allMovies) { if (!uniqueMap.has(m.id)) uniqueMap.set(m.id, m); }
+    const uniqueMovies = Array.from(uniqueMap.values());
     return uniqueMovies.map(m => this.toLightweightMovie(m) as Movie);
   }
 
   async getTop10Movies(platform: 'nflix' | 'nprime' | 'hotstar' = 'nflix'): Promise<Movie[]> {
     await this.ensureCatalog(platform);
     const allMovies = this.state[platform].categories.flatMap(c => c.movies);
-    const uniqueMovies = Array.from(new Map(allMovies.map(m => [m.id, m])).values());
+    const uniqueMap = new Map<string, Movie>();
+    for (const m of allMovies) { if (!uniqueMap.has(m.id)) uniqueMap.set(m.id, m); }
+    const uniqueMovies = Array.from(uniqueMap.values());
     
     return uniqueMovies
       .sort((a, b) => b.matchScore - a.matchScore || b.releaseYear - a.releaseYear)
@@ -627,7 +638,7 @@ export class MoviesService implements OnModuleInit {
         if (logoObj?.file_path) {
           feat.logoUrl = this.image(logoObj.file_path, 'w500');
         }
-      } catch (e) {}
+      } catch (e) { this.logger.error('Failed to fetch featured movie logo', e); }
     }
     return feat;
   }
@@ -677,22 +688,7 @@ export class MoviesService implements OnModuleInit {
       const internalId = this.state[platform].tmdbIdIndex.get(id);
       if (internalId) movie = this.state[platform].movies.get(internalId);
     }
-    if (!movie) {
-      movie = [...this.state[platform].movies.values()].find((item) => item.tmdbId === id || item.id === id);
-    }
-
-    // Cross-platform fallback: If it's a search result or from another platform, check all states
-    if (!movie) {
-      for (const p of ['nflix', 'nprime', 'hotstar'] as Array<'nflix' | 'nprime' | 'hotstar'>) {
-        if (p === platform) continue;
-        movie = this.state[p].movies.get(id);
-        if (!movie) {
-           const internalId = this.state[p].tmdbIdIndex.get(id);
-           if (internalId) movie = this.state[p].movies.get(internalId);
-        }
-        if (movie) break;
-      }
-    }
+    
 
     if (!movie) throw new NotFoundException(`Title "${id}" was not found.`);
 
@@ -841,7 +837,7 @@ export class MoviesService implements OnModuleInit {
       try {
         await this.getMovieById(id, platform);
         movie = this.state[platform].movies.get(id) || movie;
-      } catch (e) {}
+      } catch (e) { this.logger.error('Failed to fetch featured movie logo', e); }
     }
 
     try {
