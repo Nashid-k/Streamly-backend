@@ -918,6 +918,50 @@ export class MoviesService implements OnModuleInit {
       
       results = this.filterGenre(results, genre);
 
+      // ────────────────────────────────────────────────────────────
+      // LIVE TMDB FALLBACK SEARCH
+      // If local search returns 0 results, query TMDB live for niche/regional content
+      // ────────────────────────────────────────────────────────────
+      if (results.length === 0 && normalized.length > 2) {
+        this.logger.log(`Live TMDB Fallback Search triggered for: "${query}"`);
+        try {
+          const tmdbSearch = await this.tmdb('search/multi', { query: normalized });
+          if (tmdbSearch.results && tmdbSearch.results.length > 0) {
+            // Take top 5 to minimize N+1 provider lookups
+            const topHits = tmdbSearch.results.slice(0, 5).filter((m: any) => m.media_type === 'movie' || m.media_type === 'tv');
+            
+            for (const hit of topHits) {
+              const providers = await this.tmdb(`${hit.media_type}/${hit.id}/watch/providers`).catch(() => null);
+              
+              // Check US and IN regions for providers to maximize chances of finding regional content
+              const usProviders = providers?.results?.['US']?.flatrate || [];
+              const inProviders = providers?.results?.['IN']?.flatrate || [];
+              const allProviderIds = Array.from(new Set([...usProviders, ...inProviders].map((p: any) => String(p.provider_id))));
+              
+              const availableOn: string[] = [];
+              if (allProviderIds.includes(this.providerMap['nflix'])) availableOn.push('Netflix');
+              if (allProviderIds.includes(this.providerMap['nprime'])) availableOn.push('Prime Video');
+              if (allProviderIds.includes(this.providerMap['hotstar'])) availableOn.push('Hotstar');
+
+              // If it's available on at least one tracked platform OR if we just want to force it to show up 
+              // (Since users want to find it, we can show it and state where it's available)
+              if (availableOn.length > 0 || allProviderIds.length > 0) {
+                const movieObj = this.toMovie(hit, hit.media_type);
+                movieObj.availablePlatforms = availableOn.length > 0 ? availableOn : ['Other'];
+                
+                // Cache into local memory so /movie/:id works when clicked
+                this.state[platform].movies.set(movieObj.id, movieObj);
+                this.state[platform].tmdbIdIndex.set(movieObj.tmdbId!, movieObj.id);
+                
+                results.push(movieObj);
+              }
+            }
+          }
+        } catch (e) {
+          this.logger.error('TMDB Live Fallback Search failed: ' + (e instanceof Error ? e.message : String(e)));
+        }
+      }
+
       const resultObj = { movies: results, actor: undefined };
       
       // Cache Search Result (LRU 100 limit per platform)
