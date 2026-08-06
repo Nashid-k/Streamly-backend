@@ -232,6 +232,10 @@ export class MoviesService implements OnModuleInit {
 
     const rawSources = isTV ? [
       { name: 'VidLink',     url: `https://vidlink.pro/tv/${tmdbIdStr}/1/1?${vl}`,                                           type: 'stream' as const },
+      { name: 'AutoEmbed',   url: `https://autoembed.co/tv/tmdb/${tmdbIdStr}-1-1`,                                           type: 'stream' as const },
+      { name: 'VidSrc.me',   url: `https://vidsrc.me/embed/tv?tmdb=${tmdbIdStr}&season=1&episode=1`,                         type: 'stream' as const },
+      { name: 'VidSrc.rip',  url: `https://vidsrc.rip/embed/tv/${tmdbIdStr}/1/1`,                                            type: 'stream' as const },
+      { name: 'Vidsrc.io',   url: `https://vidsrc.io/embed/tv/${tmdbIdStr}/1/1`,                                             type: 'stream' as const },
       { name: '2Embed (Cineby)', url: `https://www.2embed.cc/embed/${tmdbIdStr}/1/1`,                                       type: 'stream' as const },
       { name: 'VidSrc',      url: `https://vidsrc.pm/embed/tv/${tmdbIdStr}/1/1`,                                            type: 'stream' as const },
       { name: 'Mapple (4KHD)',   url: `https://www.2embed.cc/embed/${tmdbIdStr}/1/1#mapple`,                                type: 'stream' as const },
@@ -240,6 +244,10 @@ export class MoviesService implements OnModuleInit {
       { name: 'VidSrc.in',   url: `https://vidsrc.in/embed/tv/${tmdbIdStr}/1/1`,                                            type: 'stream' as const }
     ] : [
       { name: 'VidLink',     url: `https://vidlink.pro/movie/${tmdbIdStr}?${vl}`,                                            type: 'stream' as const },
+      { name: 'AutoEmbed',   url: `https://autoembed.co/movie/tmdb/${tmdbIdStr}`,                                            type: 'stream' as const },
+      { name: 'VidSrc.me',   url: `https://vidsrc.me/embed/movie?tmdb=${tmdbIdStr}`,                                         type: 'stream' as const },
+      { name: 'VidSrc.rip',  url: `https://vidsrc.rip/embed/movie/${tmdbIdStr}`,                                             type: 'stream' as const },
+      { name: 'Vidsrc.io',   url: `https://vidsrc.io/embed/movie/${tmdbIdStr}`,                                              type: 'stream' as const },
       { name: '2Embed (Cineby)', url: `https://www.2embed.cc/embed/${tmdbIdStr}`,                                          type: 'stream' as const },
       { name: 'VidSrc',      url: `https://vidsrc.pm/embed/movie/${tmdbIdStr}`,                                            type: 'stream' as const },
       { name: 'Mapple (4KHD)',   url: `https://www.2embed.cc/embed/${tmdbIdStr}#mapple`,                                   type: 'stream' as const },
