@@ -65,14 +65,19 @@ export class AuthService {
     if (existing) {
       throw new ConflictException('An account with this email already exists.');
     }
-    if (!email || !password || password.length < 6) {
-      throw new UnauthorizedException('Email and password (min 6 chars) are required.');
+    if (!email || !password || password.length < 8) {
+      throw new UnauthorizedException('Email and password (min 8 chars) are required.');
     }
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      throw new UnauthorizedException('Invalid email format.');
+    }
+    const cleanName = name?.trim().replace(/[<>]/g, '') || 'Streamer';
 
     const newUser: AuthUser = {
       id: `user_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
       email: email.toLowerCase().trim(),
-      name: name?.trim() || 'Streamer',
+      name: cleanName,
       passwordHash: this.hashPassword(password),
       createdAt: Date.now(),
       profiles: [
