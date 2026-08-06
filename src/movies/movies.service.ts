@@ -240,8 +240,7 @@ export class MoviesService implements OnModuleInit {
       { name: 'VidSrc',      url: `https://vidsrc.pm/embed/tv/${tmdbIdStr}/1/1`,                                            type: 'stream' as const },
       { name: 'Mapple (4KHD)',   url: `https://www.2embed.cc/embed/${tmdbIdStr}/1/1#mapple`,                                type: 'stream' as const },
       { name: 'Main',        url: `https://multiembed.mov/directstream.php?video_id=${tmdbIdStr}&tmdb=1&s=1&e=1`,            type: 'stream' as const },
-      { name: 'Prime',       url: `https://primestream.io/embed/tv/${tmdbIdStr}/1/1`,                                        type: 'stream' as const },
-      { name: 'VidSrc.in',   url: `https://vidsrc.in/embed/tv/${tmdbIdStr}/1/1`,                                            type: 'stream' as const }
+      { name: 'Prime',       url: `https://primestream.io/embed/tv/${tmdbIdStr}/1/1`,                                        type: 'stream' as const }
     ] : [
       { name: 'VidLink',     url: `https://vidlink.pro/movie/${tmdbIdStr}?${vl}`,                                            type: 'stream' as const },
       { name: 'AutoEmbed',   url: `https://autoembed.co/movie/tmdb/${tmdbIdStr}`,                                            type: 'stream' as const },
@@ -252,8 +251,7 @@ export class MoviesService implements OnModuleInit {
       { name: 'VidSrc',      url: `https://vidsrc.pm/embed/movie/${tmdbIdStr}`,                                            type: 'stream' as const },
       { name: 'Mapple (4KHD)',   url: `https://www.2embed.cc/embed/${tmdbIdStr}#mapple`,                                   type: 'stream' as const },
       { name: 'Main',        url: `https://multiembed.mov/directstream.php?video_id=${tmdbIdStr}&tmdb=1`,                   type: 'stream' as const },
-      { name: 'Prime',       url: `https://primestream.io/embed/movie/${tmdbIdStr}`,                                        type: 'stream' as const },
-      { name: 'VidSrc.in',   url: `https://vidsrc.in/embed/movie/${tmdbIdStr}`,                                            type: 'stream' as const }
+      { name: 'Prime',       url: `https://primestream.io/embed/movie/${tmdbIdStr}`,                                        type: 'stream' as const }
     ];
     const sources = rawSources.map(s => ({ ...s, url: this.encodeUrl(s.url) }));
 
