@@ -872,7 +872,7 @@ export class MoviesService implements OnModuleInit {
           for (const movie of pMovies) {
               const key = movie.tmdbId || movie.title; 
               if (!combinedMoviesMap.has(key)) {
-                  combinedMoviesMap.set(key, { ...movie, availablePlatforms: [platformLabel[p]] });
+                  combinedMoviesMap.set(key, { ...movie, platform: p, availablePlatforms: [platformLabel[p]] });
               } else {
                   const existing = combinedMoviesMap.get(key)!;
                   if (!existing.availablePlatforms!.includes(platformLabel[p])) {
