@@ -1,24 +1,56 @@
-# AIOS-ALL IN ONE STREAM Backend
+# 🚀 StreamUI Backend (NestJS)
 
-This is the backend for the AIOS-ALL IN ONE STREAM catalog application, providing robust, high-performance API endpoints for movie and TV discovery.
+Welcome to the **StreamUI Backend**, a robust, high-performance API service built with NestJS. This backend powers the cinematic StreamUI frontend, handling everything from user authentication to complex catalog metadata scraping and caching.
 
-## 🚀 Recent Updates & Features
-- **In-Memory Caching:** Eliminated TMDB-based live search network latency. Implemented an O(1) high-performance local search engine.
-- **Robust State Management:** Added write-locking queues to `users.service.ts` to prevent JSON data loss from concurrent profile writes.
-- **Enhanced Sorting Logic:** Removed forced background sorting in API responses to strictly respect frontend relevancy rules.
+## ✨ Core Capabilities
 
-## Configuration
+- **Ultra-Fast Performance:** Built on top of Express and NestJS, utilizing advanced caching mechanisms to serve metadata at lightning speed.
+- **Dynamic Catalog Engine:** Hooks into TMDB and other metadata providers to seamlessly scrape, aggregate, and deliver rich movie/series data.
+- **Advanced Caching:** In-memory caching layers ensure that frequently accessed categories and top-10 lists are served with zero database latency.
+- **Robust Authentication:** Secure JWT-based authentication system supporting user sessions and multi-profile setups.
+- **Cross-Origin Ready:** Pre-configured with CORS and compression to handle thousands of concurrent requests from the frontend efficiently.
 
-Local development uses environment files:
+## 🛠️ Tech Stack
+- **Framework:** NestJS (Node.js)
+- **Language:** TypeScript
+- **Caching:** cache-manager
+- **Security:** @nestjs/jwt & class-validator
+- **Integrations:** @consumet/extensions, yt-search
 
-Copy `backend/.env.example` to `backend/.env`. Set exactly one of `TMDB_READ_TOKEN` or `TMDB_API_KEY`; this file is server-only.
+## 🚀 Getting Started
 
-Adjust `TMDB_CATALOG_PAGES` and `TMDB_ITEMS_PER_RAIL` in `backend/.env` to control catalog breadth. The backend bounds these values to protect the upstream API.
+### Prerequisites
+- [Node.js](https://nodejs.org/) (v18+)
+- npm or yarn
 
-## Deployment
+### Installation
 
-Deploy the frontend and backend as separate services.
+1. **Install dependencies:**
+   ```bash
+   npm install
+   ```
 
-- Backend: inject the values in `backend/.env.example` as encrypted service environment variables. Set `FRONTEND_ORIGIN=https://your-frontend.example` (comma-separated for multiple approved origins) and run `npm run start`.
+2. **Configure Environment Variables:**
+   Create a `.env` file in the root of the `backend` directory and add your required secrets.
+   ```env
+   PORT=3001
+   JWT_SECRET=your_super_secret_key_here
+   ```
 
-The catalog is populated from paginated TMDB discovery rails and search results. It intentionally has no embedded title list, so it remains current without source changes.
+3. **Start the Application:**
+   
+   *Development Mode (with Hot Reloading):*
+   ```bash
+   npm run start:dev
+   ```
+
+   *Production Mode:*
+   ```bash
+   npm run build
+   npm run start:prod
+   ```
+
+## 🔐 Architecture Notes
+- **Controllers:** Handle incoming HTTP requests and route them to specific services.
+- **Services:** Contain the core business logic, web scrapers, and API integrations.
+- **Cache:** Heavily relied upon to minimize rate-limiting from external APIs (like TMDB).
