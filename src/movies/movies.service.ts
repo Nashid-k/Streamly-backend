@@ -584,6 +584,8 @@ export class MoviesService implements OnModuleInit {
       id: m.id,
       tmdbId: m.tmdbId,
       title: m.title,
+      originalTitle: m.originalTitle,
+      description: m.description,
       posterUrl: m.posterUrl,
       backdropUrl: m.backdropUrl,
       matchScore: m.matchScore,
@@ -603,6 +605,9 @@ export class MoviesService implements OnModuleInit {
       sources: m.sources || [],
       videoUrl: m.videoUrl,
       embedUrl: m.embedUrl,
+      cast: m.cast || [],
+      director: m.director,
+      availablePlatforms: m.availablePlatforms || [],
     };
   }
 
