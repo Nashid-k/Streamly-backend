@@ -1,8 +1,10 @@
 import { config } from 'dotenv';
 import { join } from 'path';
 import { NestFactory } from '@nestjs/core';
-const compression = require('compression');
+import * as compression from 'compression';
 import { AppModule } from './app.module';
+
+import { ConfigService } from '@nestjs/config';
 
 // Resolve this relative to the backend source/build directory so `npm --prefix
 // backend ...` and a root-level process both load backend/.env.
@@ -10,10 +12,11 @@ config({ path: join(__dirname, '..', '.env') });
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
+  const configService = app.get(ConfigService);
   
   app.use(compression());
   
-  const envOrigins = (process.env.FRONTEND_URL || '').split(',');
+  const envOrigins = (configService.get<string>('FRONTEND_URL') || '').split(',');
   const defaultOrigins = ['http://localhost:3000', 'https://streamly-gules.vercel.app'];
   const allowedOrigins = [...envOrigins, ...defaultOrigins]
     .map((origin) => origin.trim())
@@ -26,7 +29,7 @@ async function bootstrap() {
     exposedHeaders: ['Cache-Control'],
   });
 
-  const port = process.env.PORT || 4000;
+  const port = configService.get<number>('PORT') || 4000;
   await app.listen(port, '0.0.0.0');
   console.log(`🚀 NestJS Backend running on port: ${port}`);
 }

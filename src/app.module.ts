@@ -4,6 +4,9 @@ import { MoviesModule } from './movies/movies.module';
 import { UsersModule } from './users/users.module';
 import { AuthModule } from './auth/auth.module';
 
+import * as Joi from 'joi';
+import { ConfigModule } from '@nestjs/config';
+
 /**
  * Cache configuration:
  * - In-memory (default): 4-hour TTL for TMDB catalog responses
@@ -18,6 +21,16 @@ const cacheConfig = CacheModule.register({
 
 @Module({
   imports: [
+    ConfigModule.forRoot({
+      isGlobal: true,
+      validationSchema: Joi.object({
+        PORT: Joi.number().default(4000),
+        TMDB_API_KEY: Joi.string().required(),
+        TMDB_READ_TOKEN: Joi.string().optional(),
+        RAPIDAPI_KEY: Joi.string().optional(),
+        FRONTEND_URL: Joi.string().default('http://localhost:3000'),
+      }),
+    }),
     cacheConfig,
     MoviesModule,
     UsersModule,
